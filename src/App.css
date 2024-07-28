@@ -22,3 +22,8 @@
   position: absolute;
   z-index: 3;
 } */
+
+.flip-horizontal{
+  transform: scaleX(-1);
+
+}
