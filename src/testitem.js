@@ -10,8 +10,8 @@ function PoseApp() {
   const [scene, setScene] = useState(null);
   const [renderer, setRenderer] = useState(null);
   const [camera, setCamera] = useState(null);
-  const [box, setBox] = useState(null);
-  const [leftbox, setLeftBox] = useState(null);
+  const joints = useRef([]);
+  const bones = useRef([]);
 
   useEffect(() => {
     async function setupDetector() {
@@ -38,7 +38,6 @@ function PoseApp() {
       const startVideo = async () => {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: true,
-          
         });
         video.srcObject = stream;
 
@@ -46,12 +45,14 @@ function PoseApp() {
           while (video.readyState >= 2) {
             const poses = await detector.estimatePoses(video);
             if (poses.length > 0) {
-              const rightWrist = poses[0]?.keypoints3D?.find(point => point.name === "right_wrist");
-              const leftWrist = poses[0]?.keypoints3D?.find(point => point.name === "left_wrist");
-              if (rightWrist) {
-                box.position.set(rightWrist.x *-5,rightWrist.y *-5, rightWrist.z *-5); // Adjust based on your coordinate system
-                leftbox.position.set(leftWrist.x *-5,leftWrist.y *-5, leftWrist.z *-5); // Adjust based on your coordinate system
-              }
+              poses[0].keypoints3D.forEach((point, index) => {
+                if (joints.current[index]) {
+                  joints.current[index].position.set(point.x * -5, point.y * -5, point.z * -5);
+                }
+
+                // update bones
+                // updateBones(poses[0].keypoints3D)
+              });
             }
             renderer.render(scene, camera);
             requestAnimationFrame(() => {});
@@ -67,27 +68,56 @@ function PoseApp() {
     // Setup Three.js Scene
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
+    const renderer = new THREE.WebGLRenderer({alpha:true});
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
+    renderer.setClearColor(0x000000, 1); // Set clear color with alpha 0
 
-    // Add a 3D Box
-    const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const materialleft = new THREE.MeshBasicMaterial({ color: 0xdddd });
-    const box = new THREE.Mesh(geometry, material);
-    const leftbox = new THREE.Mesh(geometry, materialleft);
-    scene.add(box);
-    scene.add(leftbox);
-    camera.position.z = 5;
+    // Create joints for the skeleton
+    const jointGeometry = new THREE.SphereGeometry(0.1);
+    const jointMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    for (let i = 0; i < 33; i++) { // Assume 33 keypoints from BlazePose
+      const joint = new THREE.Mesh(jointGeometry, jointMaterial);
+      scene.add(joint);
+      joints.current.push(joint);
+    }
+
+    // add bones 
+    const boneMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    for (let i = 0; i < 32; i++) { // Creating one less bone than joints
+      const bone = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1), boneMaterial);
+      // scene.add(bone);
+      bones.current.push(bone);
+    }
+
+    camera.position.z = 8;
 
     // Set State
     setScene(scene);
     setCamera(camera);
     setRenderer(renderer);
-    setBox(box);
-    setLeftBox(leftbox)
   }, []);
+
+  const updateBones = (keypoints3D) => {
+    bones.current.forEach((bone, index) => {
+      if (keypoints3D[index] && keypoints3D[index + 1]) {
+        const joint1 = joints.current[index].position;
+        const joint2 = joints.current[index + 1].position;
+        const distance = joint1.distanceTo(joint2);
+
+        bone.position.set(
+          (joint1.x + joint2.x) / -2,
+          (joint1.y + joint2.y) / -2,
+          (joint1.z + joint2.z) / 2
+        );
+
+        bone.scale.set(1, distance, 1);
+
+        bone.lookAt(joint2);
+      }
+    });
+  };
+
 
   return (
     <div className="App">

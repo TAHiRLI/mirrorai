@@ -33,7 +33,7 @@ const Fetcher = () => {
     if (file) {
       formdata.append("photo", file); // Append file if it exists
     }
-    const url = 'https://localhost:44382/user/api/seller';
+    const url = 'https://serverotb-001-site1.gtempurl.com/user/api/seller';
     
     fetch(url, {
         method: 'POST', // or 'POST'
