@@ -10,36 +10,21 @@ const Fetcher = () => {
   const handleClick = ()=>{
    
    let formdata = new FormData();
-   formdata.append("ActivityAreaId", 9)
-   formdata.append("InstallmentCardIds",[1])
-   formdata.append("Latitude", 12)
-   formdata.append("Longitude", 12)
-   formdata.append("StoreName", "tahir")
-   formdata.append("PaymentMethod", 2)
-   formdata.append("Address", "tahir")
-   formdata.append("Phone", "tahir")
-   formdata.append("Email", "tahir")
-   formdata.append("Director", "tahir")
-   formdata.append("Whatsapp", "tahir")
-   formdata.append("AdditionalInfo", "tahir")
-   formdata.append("Instagram", "tahir")
-   formdata.append("Tiktok", "tahir")
-   formdata.append("Facebook", "tahir")
-   formdata.append("Telegram", "tahir")
-   formdata.append("StoreName", "tahir");
-   formdata.append("sellerContacts", {  fullname: "string",
-    number: "string"})
+   formdata.append("surname", "Tahir")
+   formdata.append("age", "12")
 
     if (file) {
-      formdata.append("photo", file); // Append file if it exists
+      formdata.append("mapFile", file); // Append file if it exists
     }
-    const url = 'https://serverotb-001-site1.gtempurl.com/user/api/seller';
+    const url = 'https://localhost:58771/api/tablerows/byId/1';
     
     fetch(url, {
         method: 'POST', // or 'POST'
         body: formdata,
+        
         headers: {
-            'Authorization': `Bearer ${token}`
+
+            'Authorization': `Bearer ${token}`, 
     
         }
     }).then(response => response.json())
